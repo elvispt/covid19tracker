@@ -101,7 +101,6 @@ export default {
         },
       },
       last_update: '',
-      chartCountry: 'es',
     };
   },
 
@@ -111,11 +110,12 @@ export default {
 
   methods: {
     handleDoubleClick(row) {
-      this.chartCountry = row.country_code;
-      /*
-      console.log(this.data);
-      console.log(row);
-      */
+      const countryCode = row.country_code;
+      this.$router.push({
+        name: 'CountryCharts',
+        params: { country: countryCode },
+        props: { country: countryCode, }
+      });countryCode
     },
     populateTable() {
       let storedData = localStorage.getItem('stats');
@@ -126,7 +126,7 @@ export default {
           storedData = null;
         }
       }
-      if (!storedData || !storedData.data || (storedData.saved + 300000) < Date.now()) {
+      if (!storedData || !storedData.data || (storedData.saved + 3600000) < Date.now()) {
         storedData = {
           data: [],
           saved: Date.now(),
