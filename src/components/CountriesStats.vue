@@ -49,8 +49,13 @@ export default {
         },
         {
           prop: "total_infected",
-          label: "Total Infected",
+          label: "Infected",
           formatter: this.formatNumber,
+        },
+        {
+          prop: "infections_per_million",
+          label: "Per Million",
+          formatter: this.formatDecimalNumber,
         },
         {
           prop: "new_cases",
@@ -59,8 +64,13 @@ export default {
         },
         {
           prop: "total_deaths",
-          label: "Total Deaths",
+          label: "Deaths",
           formatter: this.formatNumber,
+        },
+        {
+          prop: "death_per_million",
+          label: "Per Million",
+          formatter: this.formatDecimalNumber,
         },
         {
           prop: "new_deaths",
@@ -69,14 +79,14 @@ export default {
         },
         {
           prop: "total_recovered",
-          label: "Total Recovered",
+          label: "Recovered",
           formatter: this.formatNumber,
         },
         {
           prop: "death_rate",
           label: "Death Rate",
           formatter: this.formatPercentage,
-        }
+        },
       ],
       filters: [
         {
@@ -102,7 +112,10 @@ export default {
   methods: {
     handleDoubleClick(row) {
       this.chartCountry = row.country_code;
-      console.log(this.chartCountry);
+      /*
+      console.log(this.data);
+      console.log(row);
+      */
     },
     populateTable() {
       let storedData = localStorage.getItem('stats');
@@ -124,7 +137,7 @@ export default {
             Object.keys(results).forEach(key => {
               let ct = results[key];
               if (ct.total_cases >= 100) {
-                storedData.data.push({
+                let countryData = {
                   country: ct.title,
                   country_code: ct.code,
                   total_deaths: ct.total_deaths,
@@ -133,11 +146,33 @@ export default {
                   new_cases: ct.total_new_cases_today,
                   total_recovered: ct.total_recovered,
                   death_rate: (ct.total_deaths * 100) / ct.total_cases,
-                });
+                  death_per_million: null,
+                  infections_per_million: null,
+                };
+                this.fetchCountryInfo(ct.code)
+                  .then(response => {
+                    if (response && Array.isArray(response) && response.length && response[0]) {
+                      let population = response[0].population;
+                      const millionsOfCitizens = (population / 1000000);
+                      if (population) {
+                        let deathPerMillion = countryData.total_deaths / millionsOfCitizens;
+                        countryData.death_per_million = deathPerMillion;
+                        let infectionsPerMillion = countryData.total_infected / millionsOfCitizens;
+                        countryData.infections_per_million = infectionsPerMillion;
+                      }
+                    }
+                    return true;
+                  })
+                  .then(r => {
+                    if (r) {
+                      localStorage.setItem('stats', JSON.stringify(storedData));
+                    }
+                  })
+                ;
+                storedData.data.push(countryData);
               }
             });
             this.data = storedData.data;
-            localStorage.setItem('stats', JSON.stringify(storedData));
           })
         ;
       } else {
@@ -149,9 +184,13 @@ export default {
     fetchStats() {
       return fetch(`https://api.thevirustracker.com/free-api?countryTotals=ALL`)
         .then(res => res.json())
-        
         .catch(err => console.error(err))
       ;
+    },
+    fetchCountryInfo(countryCodes) {
+      return fetch(`https://restcountries.eu/rest/v2/alpha?codes=${countryCodes}`)
+      .then(res => res.json())
+      .catch(err => console.error(err))
     },
     formatPercentage(row) {
       let value = row.death_rate;
@@ -162,7 +201,12 @@ export default {
       let value = row[property];
       let formatted = numeral(value).format();
       return formatted.replace(new RegExp(',', 'g'), ' ');
-    }
+    },
+    formatDecimalNumber(row, column) {
+      const property = column.property;
+      let value = row[property];
+      return numeral(value).format('0.000');
+    },
   },
 
   filters: {
