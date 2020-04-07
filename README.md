@@ -1,5 +1,7 @@
 # covid19tracker
 
+Makes requests to public apis to obtain the necessary data. This is all just static files (use the dist directory after building). A simple web server is enough to make this work.
+
 ## Project setup
 ```
 npm install
