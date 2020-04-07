@@ -1,11 +1,18 @@
 <template>
   <div class="px-6">
-    <h3 class="text-2xl font-bold text-gray-800">
+    <h3 class="text-2xl font-bold text-gray-800" v-loading="loading">
       Per Country
       <small class="text-xs">Last update @ {{ last_update | toLocalDate }}</small>
     </h3>
-    <small class="text-gray-800">Does not include countries with &lt; 100 total infection cases</small>
-    <div class="mb-1">
+    <el-alert
+      :title="alert.title"
+      type="info"
+      class="text-xs"
+      :closable="alert.closable"
+    ></el-alert>
+    <small class="text-gray-800"></small>
+    
+    <div class="mt-1">
       <el-row>
         <el-col :span="6">
           <el-input v-model="filters[0].value" placeholder="Find Country"></el-input>
@@ -28,8 +35,6 @@
       ></el-table-column>
       
     </data-tables>
-
-    <hr>
   </div>
 </template>
 
@@ -41,6 +46,11 @@ export default {
 
   data() {
     return {
+      loading: true,
+      alert: {
+        title: "Double click rows to view country specific graphs. Does not include countries with < 100 total infection cases",
+        closable: false,
+      },
       data: [],
       titles: [
         {
@@ -133,23 +143,27 @@ export default {
         };
         this.fetchStats()
           .then(response => {
-            let results = response.countryitems[0];
-            Object.keys(results).forEach(key => {
-              let ct = results[key];
-              if (ct.total_cases >= 100) {
+            let results = response.Countries;
+
+            results.forEach(ct => {
+              const totalCases = ct.TotalConfirmed;
+              if (totalCases >= 100) {
+                const totalDeaths = ct.TotalDeaths;
+                const totalCases = ct.TotalConfirmed;
+                const countryCode = ct.CountryCode;
                 let countryData = {
-                  country: ct.title,
-                  country_code: ct.code,
-                  total_deaths: ct.total_deaths,
-                  new_deaths: ct.total_new_deaths_today,
-                  total_infected: ct.total_cases,
-                  new_cases: ct.total_new_cases_today,
-                  total_recovered: ct.total_recovered,
-                  death_rate: (ct.total_deaths * 100) / ct.total_cases,
+                  country: ct.Country,
+                  country_code: countryCode,
+                  total_deaths: ct.totalDeaths,
+                  new_deaths: ct.NewDeaths,
+                  total_infected: ct.TotalConfirmed,
+                  new_cases: ct.NewConfirmed,
+                  total_recovered: ct.TotalRecovered,
+                  death_rate: (totalDeaths * 100) / totalCases,
                   death_per_million: null,
                   infections_per_million: null,
                 };
-                this.fetchCountryInfo(ct.code)
+                this.fetchCountryInfo(countryCode)
                   .then(response => {
                     if (response && Array.isArray(response) && response.length && response[0]) {
                       let population = response[0].population;
@@ -180,9 +194,10 @@ export default {
       }
 
       this.last_update = storedData.saved;
+      setTimeout(() => { this.loading = false }, 1000);
     },
     fetchStats() {
-      return fetch(`https://api.thevirustracker.com/free-api?countryTotals=ALL`)
+      return fetch('https://api.covid19api.com/summary')
         .then(res => res.json())
         .catch(err => console.error(err))
       ;
