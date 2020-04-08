@@ -154,7 +154,7 @@ export default {
                 let countryData = {
                   country: ct.Country,
                   country_code: countryCode,
-                  total_deaths: ct.totalDeaths,
+                  total_deaths: totalDeaths,
                   new_deaths: ct.NewDeaths,
                   total_infected: ct.TotalConfirmed,
                   new_cases: ct.NewConfirmed,
@@ -169,7 +169,7 @@ export default {
                       let population = response[0].population;
                       const millionsOfCitizens = (population / 1000000);
                       if (population) {
-                        let deathPerMillion = countryData.total_deaths / millionsOfCitizens;
+                        let deathPerMillion = totalDeaths / millionsOfCitizens;
                         countryData.death_per_million = deathPerMillion;
                         let infectionsPerMillion = countryData.total_infected / millionsOfCitizens;
                         countryData.infections_per_million = infectionsPerMillion;
