@@ -13,9 +13,29 @@
     <small class="text-gray-800"></small>
     
     <div class="mt-1">
-      <el-row>
+      <el-row align="middle" type="flex" :gutter="20">
         <el-col :span="6">
+          <label>Find country</label>
           <el-input v-model="filters[0].value" placeholder="Find Country"></el-input>
+        </el-col>
+        <el-col :span="7">
+          <label>Filter by infected</label>
+          <el-radio-group v-model="filters[1].value">
+            <el-radio-button label="*">*</el-radio-button>
+            <el-radio-button label="1000">&gt; 1K</el-radio-button>
+            <el-radio-button label="10000">&gt; 10K</el-radio-button>
+            <el-radio-button label="100000">&gt; 100K</el-radio-button>
+          </el-radio-group>
+        </el-col>
+
+        <el-col :span="7">
+          <label>Filter by deaths</label>
+          <el-radio-group v-model="filters[2].value">
+            <el-radio-button label="*">*</el-radio-button>
+            <el-radio-button label="100">&gt; 100</el-radio-button>
+            <el-radio-button label="1000">&gt; 1K</el-radio-button>
+            <el-radio-button label="10000">&gt; 10K</el-radio-button>
+          </el-radio-group>
         </el-col>
       </el-row>
     </div>
@@ -48,7 +68,7 @@ export default {
     return {
       loading: true,
       alert: {
-        title: "Double click rows to view country specific graphs. Does not include countries with < 100 total infection cases",
+        title: "Double click rows to view country specific graphs.",
         closable: false,
       },
       data: [],
@@ -102,7 +122,37 @@ export default {
         {
           prop: 'country',
           value: ''
-        }
+        },
+        {
+          value: '*',
+          filterFn: (row, filter) => {
+            if (filter.value === '*') {
+              return row;
+            }
+            return Object.keys(row).some(prop => {
+              if (prop === 'total_infected') {
+                return row.total_infected >= (filter.value * 1);
+              } else {
+                return false;
+              }
+            });
+          }
+        },
+        {
+          value: '*',
+          filterFn: (row, filter) => {
+            if (filter.value === '*') {
+              return row;
+            }
+            return Object.keys(row).some(prop => {
+              if (prop === 'total_deaths') {
+                return row.total_deaths >= (filter.value * 1);
+              } else {
+                return false;
+              }
+            });
+          }
+        },
       ],
       tableProps: {
         defaultSort: {
@@ -147,44 +197,42 @@ export default {
 
             results.forEach(ct => {
               const totalCases = ct.TotalConfirmed;
-              if (totalCases >= 100) {
-                const totalDeaths = ct.TotalDeaths;
-                const totalCases = ct.TotalConfirmed;
-                const countryCode = ct.CountryCode;
-                let countryData = {
-                  country: ct.Country,
-                  country_code: countryCode,
-                  total_deaths: totalDeaths,
-                  new_deaths: ct.NewDeaths,
-                  total_infected: ct.TotalConfirmed,
-                  new_cases: ct.NewConfirmed,
-                  total_recovered: ct.TotalRecovered,
-                  death_rate: (totalDeaths * 100) / totalCases,
-                  death_per_million: null,
-                  infections_per_million: null,
-                };
-                this.fetchCountryInfo(countryCode)
-                  .then(response => {
-                    if (response && Array.isArray(response) && response.length && response[0]) {
-                      let population = response[0].population;
-                      const millionsOfCitizens = (population / 1000000);
-                      if (population) {
-                        let deathPerMillion = totalDeaths / millionsOfCitizens;
-                        countryData.death_per_million = deathPerMillion;
-                        let infectionsPerMillion = countryData.total_infected / millionsOfCitizens;
-                        countryData.infections_per_million = infectionsPerMillion;
-                      }
+              const totalDeaths = ct.TotalDeaths;
+              const countryCode = ct.CountryCode;
+              let countryData = {
+                country: ct.Country,
+                country_code: countryCode,
+                total_deaths: totalDeaths,
+                new_deaths: ct.NewDeaths,
+                total_infected: ct.TotalConfirmed,
+                new_cases: ct.NewConfirmed,
+                total_recovered: ct.TotalRecovered,
+                death_rate: (totalDeaths * 100) / totalCases,
+                death_per_million: null,
+                infections_per_million: null,
+              };
+              this.fetchCountryInfo(countryCode)
+                .then(response => {
+                  if (response && Array.isArray(response) && response.length && response[0]) {
+                    let population = response[0].population;
+                    const millionsOfCitizens = (population / 1000000);
+                    if (population) {
+                      let deathPerMillion = totalDeaths / millionsOfCitizens;
+                      countryData.death_per_million = deathPerMillion;
+                      let infectionsPerMillion = countryData.total_infected / millionsOfCitizens;
+                      countryData.infections_per_million = infectionsPerMillion;
                     }
-                    return true;
-                  })
-                  .then(r => {
-                    if (r) {
-                      localStorage.setItem('stats', JSON.stringify(storedData));
-                    }
-                  })
-                ;
-                storedData.data.push(countryData);
-              }
+                  }
+                  return true;
+                })
+                .then(r => {
+                  if (r) {
+                    localStorage.setItem('stats', JSON.stringify(storedData));
+                  }
+                })
+              ;
+              storedData.data.push(countryData);
+              
             });
             this.data = storedData.data;
           })

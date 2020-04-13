@@ -1,15 +1,22 @@
 <template>
   <div class="world-stats px-6">
     <h3 class="text-2xl font-bold text-gray-800" v-loading="loading">World Stats</h3>
-    <div class="flex items-stretch text-gray-800">
-      <div class="flex-1 bg-gray-200">
-        Total infected: {{ total | formatNumber }} <small class="text-red-600">(+ {{ newCases | formatNumber }})</small>
-        </div>
-      <div class="flex-1 bg-gray-200">
-        Total Deaths: {{ totalDeaths | formatNumber }} <small class="text-red-600">(+ {{ newTotalDeaths | formatNumber }})</small>
+    <div class="flex flex-wrap text-gray-800">
+      <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6 bg-gray-200 p-2">
+        Total infected: {{ total | formatNumber }}
+        <div class="text-red-600">+ {{ newCases | formatNumber }}</div>
       </div>
-      <div class="flex-1 bg-gray-200">Total Recovered: {{ totalRecovered | formatNumber }} <small class="text-red-600">(+ {{ newRecovered | formatNumber }})</small></div>
-      <div class="flex-1 bg-gray-200">Death Rate: {{ deathRate | formatPercentage }}</div>
+      <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6 bg-gray-200 p-2">
+        Total Deaths: {{ totalDeaths | formatNumber }}
+        <div class="text-red-600">+ {{ newTotalDeaths | formatNumber }}</div>
+      </div>
+      <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6 bg-gray-200 p-2">
+        Total Recovered: {{ totalRecovered | formatNumber }}
+        <div class="text-red-600">+ {{ newRecovered | formatNumber }}</div>
+      </div>
+      <div class="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/6 bg-gray-200 p-2">
+        Death Rate: {{ deathRate | formatPercentage }}
+      </div>
     </div>
   </div>
 </template>
